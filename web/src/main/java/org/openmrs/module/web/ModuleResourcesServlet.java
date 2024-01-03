@@ -12,6 +12,8 @@ package org.openmrs.module.web;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -89,9 +91,11 @@ public class ModuleResourcesServlet extends HttpServlet {
 			return null;
 		}
 		
-		String relativePath = ModuleUtil.getPathForResource(module, path);
-		String realPath = getServletContext().getRealPath("") + MODULE_PATH + module.getModuleIdAsPath() + "/resources"
-		        + relativePath;
+		Path basePath = Paths.get(getServletContext().getRealPath("") + MODULE_PATH + module.getModuleIdAsPath(), "resources");
+		Path relativePath = Paths.get(ModuleUtil.getPathForResource(module, path));
+
+		Path filePath = basePath.resolve(relativePath).normalize();
+		String realPath = filePath.toString();
 		
 		//if in dev mode, load resources from the development directory
 		File devDir = ModuleUtil.getDevelopmentDirectory(module.getModuleId());
