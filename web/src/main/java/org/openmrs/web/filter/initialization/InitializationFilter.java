@@ -17,19 +17,10 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Base64;
+import java.security.SecureRandom;
+import java.sql.*;
+import java.util.*;
 import java.util.Base64.Encoder;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
 import java.util.zip.ZipInputStream;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -1167,16 +1158,14 @@ public class InitializationFilter extends StartupFilter {
 			}
 			
 			connection = DriverManager.getConnection(tempDatabaseConnection, user, pw);
-			
-			for (String arg : args) {
-				arg = arg.replace(";", "&#094"); // to prevent any sql injection
-				replacedSql = replacedSql.replaceFirst("\\?", arg);
+
+
+			PreparedStatement preparedStatement = connection.prepareStatement(replacedSql);
+			for(int i=0; i< args.length; i++){
+				preparedStatement.setString(i+1, args[i]);
 			}
 			
-			// run the sql statement
-			statement = connection.createStatement();
-			
-			return statement.executeUpdate(replacedSql);
+			return preparedStatement.executeUpdate();
 			
 		}
 		catch (SQLException sqlex) {
@@ -1421,16 +1410,22 @@ public class InitializationFilter extends StartupFilter {
 									+ "_user"; // trim off enough to leave space for _user at the end
 							}
 							
-							connectionPassword.append("");
+							String chars = new StringJoiner("")
+								.add("abcdefghijklmnopqrstuvwxyz")
+								.add("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+								.add("0123456789")
+								.add(".|~@#^&")
+								.toString();
+							
 							// generate random password from this subset of alphabet
 							// intentionally left out these characters: ufsb$() to prevent certain words forming randomly
-							String chars = "acdeghijklmnopqrtvwxyzACDEGHIJKLMNOPQRTVWXYZ0123456789.|~@#^&";
-							Random r = new Random();
-							StringBuilder randomStr = new StringBuilder("");
+							SecureRandom secureRandom = new SecureRandom();
+							StringBuilder randomStr = new StringBuilder();
 							for (int x = 0; x < 12; x++) {
-								randomStr.append(chars.charAt(r.nextInt(chars.length())));
+								randomStr.append(chars.charAt(secureRandom.nextInt(chars.length())));
 							}
 							connectionPassword.append(randomStr);
+							
 							
 							// connect via jdbc with root user and create an openmrs user
 							String host = "'%'";
