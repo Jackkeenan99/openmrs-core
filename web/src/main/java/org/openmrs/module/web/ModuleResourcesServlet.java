@@ -83,7 +83,9 @@ public class ModuleResourcesServlet extends HttpServlet {
 	 */
 	protected File getFile(HttpServletRequest request) {
 		
-		String path = request.getPathInfo();
+		Path incommingPath = Paths.get(request.getPathInfo());
+		incommingPath.normalize();
+		String path = incommingPath.toString();
 		
 		Module module = ModuleUtil.getModuleForPath(path);
 		if (module == null) {
