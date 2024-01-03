@@ -1168,15 +1168,12 @@ public class InitializationFilter extends StartupFilter {
 			
 			connection = DriverManager.getConnection(tempDatabaseConnection, user, pw);
 			
-			for (String arg : args) {
-				arg = arg.replace(";", "&#094"); // to prevent any sql injection
-				replacedSql = replacedSql.replaceFirst("\\?", arg);
+			PreparedStatement preparedStatement = connection.prepareStatement(replacedSql);
+			for(int i=0; i< args.length; i++){
+				preparedStatement.setString(i+1, args[i]);
 			}
 			
-			// run the sql statement
-			statement = connection.createStatement();
-			
-			return statement.executeUpdate(replacedSql);
+			return preparedStatement.executeUpdate();
 			
 		}
 		catch (SQLException sqlex) {
