@@ -93,11 +93,9 @@ public class ModuleResourcesServlet extends HttpServlet {
 			return null;
 		}
 		
-		Path basePath = Paths.get(getServletContext().getRealPath("") + MODULE_PATH + module.getModuleIdAsPath(), "resources");
-		Path relativePath = Paths.get(ModuleUtil.getPathForResource(module, path));
-
-		Path filePath = basePath.resolve(relativePath).normalize();
-		String realPath = filePath.toString();
+		String relativePath = ModuleUtil.getPathForResource(module, path);
+		String realPath = getServletContext().getRealPath("") + MODULE_PATH + module.getModuleIdAsPath() + "/resources"
+		        + relativePath;
 		
 		//if in dev mode, load resources from the development directory
 		File devDir = ModuleUtil.getDevelopmentDirectory(module.getModuleId());
